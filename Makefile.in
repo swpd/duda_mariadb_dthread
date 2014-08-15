@@ -1,0 +1,14 @@
+CC      = gcc -g -Wall -DDEBUG
+INCDIR  = ../../src -I../../../../include/ -I../../
+OBJECTS = main.o
+
+all: ../mariadb_dthread.duda
+
+../mariadb_dthread.duda: $(OBJECTS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(DEFS) -shared -o $@ $^ -lc
+
+.c.o:
+	$(CC) $(CFLAGS) $(LDFLAGS) $(DEFS) -I$(INCDIR) -fPIC -c $<
+
+clean:
+	rm -rf *.o *~ *.*duda*
