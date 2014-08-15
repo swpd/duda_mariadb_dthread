@@ -66,20 +66,20 @@ void list_databases(void *data)
         response->cont(dr);
         response->end(dr, NULL);
     }
-    int status = mariadb->dthread_connect(conn);
+    int status = mariadb->connect(conn);
     if (status != MARIADB_OK) {
         response->printf(dr, "Can't connect to MariaDB server\n");
         response->cont(dr);
         response->end(dr, NULL);
     }
-    mariadb->dthread_query(conn, "SET NAMES 'UTF8'");
-    mariadb_result_t *result = mariadb->dthread_query(conn, "SHOW DATABASES");
+    mariadb->query(conn, "SET NAMES 'UTF8'");
+    mariadb_result_t *result = mariadb->query(conn, "SHOW DATABASES");
     assert(result);
     char **row = NULL;
     int error;
     json_t *item;
     while (1) {
-        row = mariadb->dthread_get_row(conn, result, &error);
+        row = mariadb->get_row(conn, result, &error);
         if (!row) {
             if (error) {
                 response->cont(dr);
@@ -91,7 +91,7 @@ void list_databases(void *data)
         item = json->create_string(row[0]);
         json->add_to_array(db_array, item);
     }
-    mariadb->dthread_disconnect(conn);
+    mariadb->disconnect(conn);
     char *encoded_str = json->print_gc(dr, db_array);
     response->printf(dr, "%s", encoded_str);
     response->cont(dr);
@@ -123,22 +123,22 @@ void list_tables(void *data)
         response->cont(dr);
         response->end(dr, NULL);
     }
-    int status = mariadb->dthread_connect(conn);
+    int status = mariadb->connect(conn);
     if (status != MARIADB_OK) {
         response->printf(dr, "Can't connect to MariaDB server\n");
         response->cont(dr);
         response->end(dr, NULL);
     }
-    mariadb->dthread_query(conn, "SET NAMES 'UTF8'");
+    mariadb->query(conn, "SET NAMES 'UTF8'");
     sprintf(use_db_query, "USE %s", db);
-    mariadb->dthread_query(conn, use_db_query);
-    mariadb_result_t *result = mariadb->dthread_query(conn, "SHOW TABLES");
+    mariadb->query(conn, use_db_query);
+    mariadb_result_t *result = mariadb->query(conn, "SHOW TABLES");
     assert(result);
     char **row = NULL;
     int error;
     json_t *item;
     while (1) {
-        row = mariadb->dthread_get_row(conn, result, &error);
+        row = mariadb->get_row(conn, result, &error);
         if (!row) {
             if (error) {
                 response->cont(dr);
@@ -150,7 +150,7 @@ void list_tables(void *data)
         item = json->create_string(row[0]);
         json->add_to_array(tb_array, item);
     }
-    mariadb->dthread_disconnect(conn);
+    mariadb->disconnect(conn);
     char *encoded_str = json->print_gc(dr, tb_array);
     response->printf(dr, "%s", encoded_str);
     response->cont(dr);
@@ -184,23 +184,23 @@ void row_nums(void *data)
         response->cont(dr);
         response->end(dr, NULL);
     }
-    int status = mariadb->dthread_connect(conn);
+    int status = mariadb->connect(conn);
     if (status != MARIADB_OK) {
         response->printf(dr, "Can't connect to MariaDB server\n");
         response->cont(dr);
         response->end(dr, NULL);
     }
-    mariadb->dthread_query(conn, "SET NAMES 'UTF8'");
+    mariadb->query(conn, "SET NAMES 'UTF8'");
     sprintf(use_db_query, "USE %s", db);
-    mariadb->dthread_query(conn, use_db_query);
+    mariadb->query(conn, use_db_query);
     sprintf(count_query, "SELECT COUNT(*) FROM %s", table);
-    mariadb_result_t *result = mariadb->dthread_query(conn, count_query);
+    mariadb_result_t *result = mariadb->query(conn, count_query);
     assert(result);
     char **row = NULL;
     int error;
     json_t *item;
     while (1) {
-        row = mariadb->dthread_get_row(conn, result, &error);
+        row = mariadb->get_row(conn, result, &error);
         if (!row) {
             if (error) {
                 response->cont(dr);
@@ -212,7 +212,7 @@ void row_nums(void *data)
         item = json->create_string(row[0]);
         json->add_to_array(row_nums, item);
     }
-    mariadb->dthread_disconnect(conn);
+    mariadb->disconnect(conn);
     char *encoded_str = json->print_gc(dr, row_nums);
     response->printf(dr, "%s", encoded_str);
     response->cont(dr);
@@ -249,24 +249,24 @@ void list_rows(void *data)
         response->cont(dr);
         response->end(dr, NULL);
     }
-    int status = mariadb->dthread_connect(conn);
+    int status = mariadb->connect(conn);
     if (status != MARIADB_OK) {
         response->printf(dr, "Can't connect to MariaDB server\n");
         response->cont(dr);
         response->end(dr, NULL);
     }
-    mariadb->dthread_query(conn, "SET NAMES 'UTF8'");
+    mariadb->query(conn, "SET NAMES 'UTF8'");
     sprintf(use_db_query, "USE %s", db);
-    mariadb->dthread_query(conn, use_db_query);
+    mariadb->query(conn, use_db_query);
     sprintf(select_query, "SELECT * FROM %s LIMIT %ld, %d", table, (page - 1) * page_size,
             page_size);
 
-    mariadb_result_t *result = mariadb->dthread_query(conn, select_query);
+    mariadb_result_t *result = mariadb->query(conn, select_query);
     assert(result);
     json_t *field_array = json->create_array(); 
     json_t *item;
-    char **fields = mariadb->dthread_get_fields(result);
-    int n_fields = mariadb->dthread_get_field_num(result);
+    char **fields = mariadb->get_fields(result);
+    int n_fields = mariadb->get_field_num(result);
     unsigned long i;
     for (i = 0; i < n_fields; ++i) {
         item = json->create_string(fields[i]);
@@ -277,7 +277,7 @@ void list_rows(void *data)
     char **row = NULL;
     int error;
     while (1) {
-        row = mariadb->dthread_get_row(conn, result, &error);
+        row = mariadb->get_row(conn, result, &error);
         if (!row) {
             if (error) {
                 response->cont(dr);
@@ -299,7 +299,7 @@ void list_rows(void *data)
         json->add_to_array(row_array, item);
     }
     json->add_to_object(row_root, "rows", row_array);
-    mariadb->dthread_disconnect(conn);
+    mariadb->disconnect(conn);
     char *encoded_str = json->print_gc(dr, row_root);
     response->printf(dr, "%s", encoded_str);
     response->cont(dr);
