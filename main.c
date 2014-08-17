@@ -5,6 +5,8 @@
 
 DUDA_REGISTER("MariaDB dthread support demonstration", "mariadb_dthread");
 
+duda_global_t dthread_demo_pool;
+
 static inline void print_header(duda_request_t *dr)
 {
     response->printf(dr, "\n\
@@ -59,16 +61,9 @@ void list_databases(void *data)
     response->http_header_n(dr, "Content-Type: application/json", 30);
     response->wait(dr);
 
-    mariadb_conn_t *conn = mariadb->create_conn(dr, "root", "db", "localhost",
-            NULL, 0, "/run/mysqld/mysqld.sock", 0);
+    mariadb_conn_t *conn = mariadb->pool_get_conn(&dthread_demo_pool);
     if (!conn) {
         response->printf(dr, "No Connection Available\n");
-        response->cont(dr);
-        response->end(dr, NULL);
-    }
-    int status = mariadb->connect(conn);
-    if (status != MARIADB_OK) {
-        response->printf(dr, "Can't connect to MariaDB server\n");
         response->cont(dr);
         response->end(dr, NULL);
     }
@@ -116,16 +111,9 @@ void list_tables(void *data)
     response->http_header_n(dr, "Content-Type: application/json", 30);
     response->wait(dr);
 
-    mariadb_conn_t *conn = mariadb->create_conn(dr, "root", "db", "localhost",
-            NULL, 0, "/run/mysqld/mysqld.sock", 0);
+    mariadb_conn_t *conn = mariadb->pool_get_conn(&dthread_demo_pool);
     if (!conn) {
         response->printf(dr, "No Connection Available\n");
-        response->cont(dr);
-        response->end(dr, NULL);
-    }
-    int status = mariadb->connect(conn);
-    if (status != MARIADB_OK) {
-        response->printf(dr, "Can't connect to MariaDB server\n");
         response->cont(dr);
         response->end(dr, NULL);
     }
@@ -177,16 +165,9 @@ void row_nums(void *data)
     response->http_header_n(dr, "Content-Type: application/json", 30);
     response->wait(dr);
 
-    mariadb_conn_t *conn = mariadb->create_conn(dr, "root", "db", "localhost",
-            NULL, 0, "/run/mysqld/mysqld.sock", 0);
+    mariadb_conn_t *conn = mariadb->pool_get_conn(&dthread_demo_pool);
     if (!conn) {
         response->printf(dr, "No Connection Available\n");
-        response->cont(dr);
-        response->end(dr, NULL);
-    }
-    int status = mariadb->connect(conn);
-    if (status != MARIADB_OK) {
-        response->printf(dr, "Can't connect to MariaDB server\n");
         response->cont(dr);
         response->end(dr, NULL);
     }
@@ -242,16 +223,9 @@ void list_rows(void *data)
     response->http_header_n(dr, "Content-Type: application/json", 30);
     response->wait(dr);
 
-    mariadb_conn_t *conn = mariadb->create_conn(dr, "root", "db", "localhost",
-            NULL, 0, "/run/mysqld/mysqld.sock", 0);
+    mariadb_conn_t *conn = mariadb->pool_get_conn(&dthread_demo_pool);
     if (!conn) {
         response->printf(dr, "No Connection Available\n");
-        response->cont(dr);
-        response->end(dr, NULL);
-    }
-    int status = mariadb->connect(conn);
-    if (status != MARIADB_OK) {
-        response->printf(dr, "Can't connect to MariaDB server\n");
         response->cont(dr);
         response->end(dr, NULL);
     }
@@ -263,7 +237,7 @@ void list_rows(void *data)
 
     mariadb_result_t *result = mariadb->query(conn, select_query);
     assert(result);
-    json_t *field_array = json->create_array(); 
+    json_t *field_array = json->create_array();
     json_t *item;
     char **fields = mariadb->get_fields(result);
     int n_fields = mariadb->get_field_num(result);
@@ -508,6 +482,10 @@ int duda_main()
 
     duda_load_package(mariadb, "mariadb");
     duda_load_package(json, "json");
+
+    duda_global_init(&dthread_demo_pool, NULL, NULL);
+    mariadb->create_pool(&dthread_demo_pool, 0, 0, "root", "db", "localhost",
+            NULL, 0, "/run/mysqld/mysqld.sock", 0);
 
     if_system = map->interface_new("mariadb");
 
